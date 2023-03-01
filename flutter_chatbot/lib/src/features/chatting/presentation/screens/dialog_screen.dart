@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chatbot/src/features/chatting/domain/models/message.dart';
 import 'package:flutter_dialogflow/dialogflow_v2.dart';
 import '../components/chat_bubble.dart';
 
@@ -52,26 +53,26 @@ class _DialogScreenState extends State<DialogScreen> {
       language: Language.english,
     );
     AIResponse response = await dialogflow.detectIntent(query);
-    ChatMessage botMessage = ChatMessage(
-      textMessage: response.getMessage() ??
-          CardDialogflow(response.getListMessage()[0]).title,
-      senderName: "Bot",
-      isMessageFromUser: false,
-    );
+
+    ChatMessage botChatMessage = ChatMessage(
+        message: Message(
+            textMessage: response.getMessage() ??
+                CardDialogflow(response.getListMessage()[0]).title,
+            senderName: 'Bot',
+            isMessageFromUser: false));
     setState(() {
-      _messages.insert(0, botMessage);
+      _messages.insert(0, botChatMessage);
     });
   }
 
   void _handleSubmitted(String text) {
     _textEditingController.clear();
-    ChatMessage userMessage = ChatMessage(
-      textMessage: text,
-      senderName: 'User',
-      isMessageFromUser: true,
-    );
+
+    ChatMessage userChatMessage = ChatMessage(
+        message: Message(
+            textMessage: text, senderName: 'User', isMessageFromUser: true));
     setState(() {
-      _messages.insert(0, userMessage);
+      _messages.insert(0, userChatMessage);
     });
     nextResponse(text);
   }
