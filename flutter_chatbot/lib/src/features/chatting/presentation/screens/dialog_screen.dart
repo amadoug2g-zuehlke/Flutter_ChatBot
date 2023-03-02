@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chatbot/src/constants/constants.dart';
+import 'package:flutter_chatbot/src/features/chatting/data/repository/bot_service.dart';
 import 'package:flutter_chatbot/src/features/chatting/domain/models/message.dart';
 import 'package:flutter_dialogflow/dialogflow_v2.dart';
 import '../components/chat_bubble.dart';
@@ -13,6 +15,7 @@ class DialogScreen extends StatefulWidget {
 class _DialogScreenState extends State<DialogScreen> {
   final List<ChatMessage> _messages = [];
   final TextEditingController _textEditingController = TextEditingController();
+  ChatService chatService = ChatService();
 
   Widget _buildInputField() {
     return IconTheme(
@@ -26,14 +29,16 @@ class _DialogScreenState extends State<DialogScreen> {
                 controller: _textEditingController,
                 onSubmitted: _handleSubmitted,
                 decoration:
-                    const InputDecoration.collapsed(hintText: "Send a message"),
+                    const InputDecoration.collapsed(hintText: inputHintText),
               ),
             ),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 4.0),
               child: IconButton(
                 icon: const Icon(Icons.send),
-                onPressed: () => _handleSubmitted(_textEditingController.text),
+                onPressed: () async {
+                  _handleSubmitted(_textEditingController.text);
+                },
               ),
             ),
           ],
@@ -42,23 +47,15 @@ class _DialogScreenState extends State<DialogScreen> {
     );
   }
 
-  //TODO: create Service class and reformat Dialogflow call
   void nextResponse(query) async {
     _textEditingController.clear();
-    //TODO: hide credentials properly
-    AuthGoogle authGoogle =
-        await AuthGoogle(fileJson: "assets/credentials.json").build();
-    Dialogflow dialogflow = Dialogflow(
-      authGoogle: authGoogle,
-      language: Language.english,
-    );
-    AIResponse response = await dialogflow.detectIntent(query);
+    final response = await chatService.getResponse(query);
 
     ChatMessage botChatMessage = ChatMessage(
         message: Message(
             textMessage: response.getMessage() ??
                 CardDialogflow(response.getListMessage()[0]).title,
-            senderName: 'Bot',
+            senderName: botName,
             isMessageFromUser: false));
     setState(() {
       _messages.insert(0, botChatMessage);
@@ -70,7 +67,7 @@ class _DialogScreenState extends State<DialogScreen> {
 
     ChatMessage userChatMessage = ChatMessage(
         message: Message(
-            textMessage: text, senderName: 'User', isMessageFromUser: true));
+            textMessage: text, senderName: userName, isMessageFromUser: true));
     setState(() {
       _messages.insert(0, userChatMessage);
     });
@@ -81,7 +78,7 @@ class _DialogScreenState extends State<DialogScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Flutter ChatBot'),
+        title: const Text(appTitle),
       ),
       body: Column(
         children: <Widget>[
